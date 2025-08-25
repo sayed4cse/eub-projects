@@ -1,0 +1,153 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <Servo.h>
+
+
+// Initialize LCD (I2C address 0x27, 16x2 display)
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+
+// Define pins
+#define IR_SENSOR_IN 2   // IR sensor 1 (entry)
+#define IR_SENSOR_OUT 3  // IR sensor 2 (exit)
+#define SERVO_PIN 9      // Servo motor pin
+
+
+// Parking lot details
+int totalSlots = 5;     // Total parking slots
+int availableSlots = 5; // Slots initially available
+
+
+// Servo object
+Servo gate;
+
+
+// State tracking
+bool gateOpen = false; // Tracks if the gate is open
+unsigned long debounceDelay = 2000; // Debounce time (ms)
+unsigned long lastSensorTrigger = 0;
+bool sensor1State = false; // Track Sensor 1 state
+bool sensor2State = false; // Track Sensor 2 state
+
+
+void setup() {
+  // Initialize LCD
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("Parking System");
+  delay(2000);
+
+
+  // Setup pins
+  pinMode(IR_SENSOR_IN, INPUT);
+  pinMode(IR_SENSOR_OUT, INPUT);
+  gate.attach(SERVO_PIN);
+
+
+  // Initialize servo to closed position
+  closeGate();
+
+
+  // Display initial parking slots
+  updateDisplay();
+}
+
+
+void loop() {
+  // Read the state of the sensors with debouncing
+  bool sensor1 = digitalRead(IR_SENSOR_IN) == LOW;
+  bool sensor2 = digitalRead(IR_SENSOR_OUT) == LOW;
+
+
+  // If Sensor 1 (entry) detects car and debounce delay is passed
+  if (sensor1 && !sensor1State && (millis() - lastSensorTrigger > debounceDelay)) {
+    if (availableSlots > 0) { // Check if parking slots are available
+      openGate();         // Open the gate
+      lastSensorTrigger = millis(); // Reset debounce timer
+      sensor1State = true; // Set sensor1 state to true (car detected)
+
+
+      // Wait until the car reaches Sensor 2
+      while (digitalRead(IR_SENSOR_OUT) == HIGH) {
+        delay(10); // Keep the gate open while waiting for Sensor 2
+      }
+
+
+      // Once Sensor 2 detects the car, update count and close the gate
+      availableSlots--; // Decrease available slots
+      updateDisplay();
+      closeGate();
+    } else {
+      lcd.setCursor(0, 1);
+      lcd.print("Parking Full   "); // Show parking full message
+    }
+  }
+
+
+  // If Sensor 1 state was true and it no longer detects the car
+  if (!sensor1 && sensor1State) {
+    sensor1State = false; // Reset sensor1 state when the car has passed
+  }
+
+
+  // Detect car exiting (Sensor 2 → Sensor 1)
+  if (sensor2 && !sensor2State && (millis() - lastSensorTrigger > debounceDelay)) {
+    openGate();         // Open the gate
+    lastSensorTrigger = millis(); // Reset debounce timer
+    sensor2State = true; // Set sensor2 state to true (car detected)
+
+
+    // Wait until the car reaches Sensor 1
+    while (digitalRead(IR_SENSOR_IN) == HIGH) {
+      delay(10); // Keep the gate open while waiting for Sensor 1
+    }
+
+
+    // Once Sensor 1 detects the car, update count and close the gate
+    if (availableSlots < totalSlots) {
+      availableSlots++; // Increase available slots
+      updateDisplay();
+    }
+    closeGate();
+  }
+
+
+  // If Sensor 2 state was true and it no longer detects the car
+  if (!sensor2 && sensor2State) {
+    sensor2State = false; // Reset sensor2 state when the car has passed
+  }
+}
+
+
+// Function to update the LCD display
+void updateDisplay() {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Slots Left:");
+  lcd.setCursor(0, 1);
+  lcd.print(availableSlots);
+  lcd.print("/");
+  lcd.print(totalSlots);
+
+
+  // Display "Parking Full" if no slots are available
+  if (availableSlots == 0) {
+    lcd.setCursor(0, 1);
+    lcd.print("Parking Full   ");
+  }
+}
+
+
+// Function to open the gate
+void openGate() {
+  gate.write(0);   // Open position
+  gateOpen = true; // Mark gate as open
+}
+
+
+// Function to close the gate
+void closeGate() {
+  gate.write(90);   // Closed position
+  gateOpen = false; // Mark gate as closed
+}
