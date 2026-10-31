@@ -1,0 +1,89 @@
+#include <windows.h>                // For Windows-specific OpenGL setup
+
+#ifdef __APPLE__                   // For macOS compatibility
+#include <GLUT/glut.h>
+#else                              // For Windows/Linux
+#include <GL/glut.h>
+#endif
+
+float y_position = 0.0;            // X-coordinate of the square's position
+float speed = 0.5;                 // Movement speed per frame X
+
+//Display Function
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT);  // Clear the screen with background color
+    glLoadIdentity();              // Reset current transformation matrix
+
+    glTranslated(y_position, y_position, 0.0);     // Apply X and Y translation
+
+    //Draw Rectangle
+    glBegin(GL_POLYGON);           // Start drawing a filled polygon (square)
+        glColor3f(0.5, 0.0, 0.5);  // Set color to purple (R=0.5, G=0, B=0.5)
+        glVertex2f(-10, -10);      // Bottom-left vertex of the square
+        glColor3f(0.5, 4.0, 0.5);
+        glVertex2f(10, -10);       // Bottom-right vertex
+        glColor3f(0.5, 5.0, 0.5);
+        glVertex2f(10, 10);        // Top-right vertex
+        glColor3f(0.5, 6.0, 0.5);
+        glVertex2f(-10, 10);       // Top-left vertex
+    glEnd();                       // End of polygon definition
+
+    glutSwapBuffers();             // Swap buffers to display the current frame
+}
+
+//Reshape Function
+void reshape(int w, int h)
+{
+    glViewport(0, 0, w, h);        // Set the viewport to match new window size
+
+    glMatrixMode(GL_PROJECTION);  // Switch to projection matrix
+    glLoadIdentity();             // Reset projection matrix
+    gluOrtho2D(-100, 100, -100, 100); // Set orthographic projection (2D view)
+
+    glMatrixMode(GL_MODELVIEW);   // Switch back to modelview matrix
+}
+
+//Initialization Function
+void initOpenGL()
+{
+    glClearColor(0.0, 0.0, 0.0, 0.0);      // Set background color to black (R=0, G=0, B=0, A=0)
+}
+
+//Timer Callback Function
+void timer(int)
+{
+    glutPostRedisplay();                // Mark the window to be redisplayed
+    glutTimerFunc(60 / 60, timer, 0); // Call timer() again after ~16ms (60 FPS)
+
+     y_position += speed;               // Move square to the right
+
+    // If square reaches top or bottom edge, reverse direction
+    if (y_position - 10 > 100)
+        y_position = -100 -10;
+
+    /*y_position -= speed;               // Move square to the right
+
+    // If square reaches top or bottom edge, reverse direction
+    if (y_position - 10 <= -100)
+        y_position = 100 + 10;*/
+}
+
+//Main Function
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);                                    // Initialize GLUT
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH); // Enable double buffering, RGBA color, and depth buffer
+    glutInitWindowSize(500, 500);                             // Set window size to 500x500 pixels
+    glutInitWindowPosition(100, 100);                         // Set window position on screen
+    glutCreateWindow("Rectangle Re-Translate-Z");                  // Create the window with an empty title
+
+    initOpenGL();                     // Initialize OpenGL settings
+    glutDisplayFunc(display);        // Register display function
+    glutReshapeFunc(reshape);        // Register reshape function
+    glutTimerFunc(0, timer, 0);      // Start the timer loop
+
+    glutMainLoop();                  // Enter the main event loop
+
+    return 0;                        // Exit the program
+}

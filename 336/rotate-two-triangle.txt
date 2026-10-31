@@ -1,0 +1,56 @@
+#include <GL/gl.h>     // OpenGL header for core graphics functions
+#include <GL/glut.h>   // GLUT header for window management and event handling
+
+// Function to display graphics
+void display(void) {
+    glClear(GL_COLOR_BUFFER_BIT);  // Clear the screen with the current clear color
+
+    glTranslated(+40.0, 0.0, 0.0); // Move the drawing position 40 units to the right
+
+    glBegin(GL_POLYGON);           // Start drawing a filled polygon
+        glColor3f(0.6, 0.2, 0.4);  // Set first vertex color (purple shade)
+        glVertex3f(-70, -27, 0.0); // First vertex position
+
+        glColor3f(1, 1, 1);        // Set second vertex color (white)
+        glVertex3f(-10, -27, 0.0); // Second vertex position
+
+        glColor3f(0.20, 0.5, 0.3); // Set third vertex color (greenish shade)
+        glVertex3f(-40, 40, 0.0);  // Third vertex position
+    glEnd();                       // End polygon drawing
+
+    glTranslated(-80.0, 0.0, 0.0); // Move the drawing position 80 units to the left
+
+    glBegin(GL_POLYGON);           // Start drawing another filled polygon
+        glColor3f(0.6, 0.2, 0.4);  // First vertex color (purple shade)
+        glVertex3f(40, -50, 0.0);  // First vertex position
+
+        glColor3f(1, 1, 1);        // Second vertex color (white)
+        glVertex3f(70, 7, 0.0);    // Second vertex position
+
+        glColor3f(0.20, 0.5, 0.3); // Third vertex color (greenish shade)
+        glVertex3f(10, 7, 0.0);    // Third vertex position
+    glEnd();                       // End polygon drawing
+
+    glFlush();                     // Force execution of all OpenGL commands
+}
+
+// Function to initialize OpenGL settings
+void init(void) {
+    glClearColor(0.0, 0.0, 0.0, 0.0); // Set background color to black
+    glMatrixMode(GL_PROJECTION);      // Switch to projection matrix mode
+    glLoadIdentity();                 // Reset projection matrix
+    glOrtho(-100, 100, -100, 100, -1.0, 1.0); // Set orthographic 2D projection
+}
+
+// Main function
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);                          // Initialize GLUT
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);    // Single buffer and RGB color mode
+    glutInitWindowSize(500, 500);                   // Set window size (500x500 pixels)
+    glutInitWindowPosition(100, 100);               // Set window position on screen
+    glutCreateWindow("rotate-two-triangle");        // Create a window with title "rotate-two-triangle"
+    init();                                         // Call initialization function
+    glutDisplayFunc(display);                       // Register display callback function
+    glutMainLoop();                                 // Enter the GLUT main loop
+    return 0;                                       // End of program
+}

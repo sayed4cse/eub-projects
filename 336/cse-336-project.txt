@@ -1,0 +1,277 @@
+#include <GL/gl.h>                   // Include OpenGL functions
+#include <GL/glut.h>                 // Include GLUT library for windowing and event handling
+#include <math.h>                    // Include math functions (cos, sin, etc.)
+#define PI 3.1416                    // Define the value of PI for angle calculations
+
+float boatx = 0.0;                   // Variable to track boat's horizontal position
+float birdx = 0.0;                   // Variable to track birds' horizontal position
+
+// Function to draw the sky with a vertical gradient
+void sky() {
+    glBegin(GL_QUADS);              // Begin drawing a quadrilateral
+    glColor3f(0.53, 0.81, 0.98);    // Set bottom color of sky to light blue
+    glVertex2f(-100, 0);            // Bottom-left corner of sky
+    glVertex2f(100, 0);             // Bottom-right corner of sky
+
+    glColor3f(0.1, 0.5, 0.9);       // Set top color of sky to deeper blue
+    glVertex2f(100, 100);           // Top-right corner of sky
+    glVertex2f(-100, 100);          // Top-left corner of sky
+    glEnd();                        // End drawing quadrilateral
+}
+
+// Function to draw the ground
+void ground() {
+    glColor3f(0.42, 0.56, 0.14);    // Set ground color (greenish)
+    glBegin(GL_QUADS);              // Begin drawing a quadrilateral
+    glVertex2f(-100, -100);         // Bottom-left of ground
+    glVertex2f(100, -100);          // Bottom-right of ground
+    glVertex2f(100, 0);             // Top-right of ground
+    glVertex2f(-100, 0);            // Top-left of ground
+    glEnd();                        // End drawing
+}
+
+// Function to draw the sun using triangle fan (circle)
+void sun(float cx, float cy, float r) {
+    glColor3f(1.0, 0.84, 0.0);      // Set sun color to yellow
+    glBegin(GL_TRIANGLE_FAN);      // Begin triangle fan for circular shape
+    glVertex2f(cx, cy);             // Center of the sun
+    for (int i = 0; i <= 100; i++) {
+        float angle = 2 * PI * i / 100;                  // Calculate angle
+        glVertex2f(cx + r * cos(angle), cy + r * sin(angle)); // Calculate and set vertex on circumference
+    }
+    glEnd();                        // End drawing
+}
+
+// Function to draw a bird using line strip
+void bird(float x, float y) {
+    glColor3f(0, 0, 0);             // Set color to black
+    glBegin(GL_LINE_STRIP);        // Begin drawing connected lines
+    glVertex2f(x, y);              // First point
+    glVertex2f(x + 5, y + 5);      // Middle upward point
+    glVertex2f(x + 10, y);         // Ending point
+    glEnd();                        // End drawing
+}
+
+// Function to draw a tree
+void tree(float x) {
+    glPushMatrix();                // Save current transformation
+    glTranslatef(x, 0, 0);         // Translate tree horizontally
+
+    glColor3f(0.36, 0.25, 0.20);   // Set trunk color (brown)
+    glBegin(GL_QUADS);            // Begin drawing trunk
+    glVertex2f(-2, -30);          // Bottom-left of trunk
+    glVertex2f(2, -30);           // Bottom-right of trunk
+    glVertex2f(2, 10);            // Top-right of trunk
+    glVertex2f(-2, 10);           // Top-left of trunk
+    glEnd();                      // End drawing trunk
+
+    glColor3f(0, 0.5, 0);         // Set leaf color (green)
+    glBegin(GL_TRIANGLES);       // Begin first leaf layer
+    glVertex2f(-10, 10);          // Left point
+    glVertex2f(10, 10);           // Right point
+    glVertex2f(0, 30);            // Top point
+    glEnd();                      // End triangle
+
+    glBegin(GL_TRIANGLES);       // Begin second leaf layer
+    glVertex2f(-8, 20);
+    glVertex2f(8, 20);
+    glVertex2f(0, 38);
+    glEnd();                      // End triangle
+
+    glBegin(GL_TRIANGLES);       // Begin third leaf layer
+    glVertex2f(-6, 30);
+    glVertex2f(6, 30);
+    glVertex2f(0, 45);
+    glEnd();                      // End triangle
+
+    glPopMatrix();                // Restore transformation
+}
+
+// Function to draw a house with roof, walls, doors and windows
+void house(float x) {
+    glPushMatrix();                // Save transformation
+    glTranslatef(x, 0, 0);         // Translate house horizontally
+
+    glColor3f(0.65, 0.16, 0.16);   // Set roof color (dark red)
+    glBegin(GL_TRIANGLES);        // Begin roof triangle
+    glVertex2f(-10, 20);
+    glVertex2f(50, 20);
+    glVertex2f(20, 50);
+    glEnd();                      // End triangle
+
+    glColor3f(0.87, 0.72, 0.53);   // Set house body color (beige)
+    glBegin(GL_QUADS);            // Begin drawing house body
+    glVertex2f(-5, -30);
+    glVertex2f(45, -30);
+    glVertex2f(45, 20);
+    glVertex2f(-5, 20);
+    glEnd();                      // End house body
+
+    glColor3f(0.4, 0.26, 0.13);    // Set door color (brown)
+    glBegin(GL_QUADS);            // Draw door
+    glVertex2f(15, -30);
+    glVertex2f(25, -30);
+    glVertex2f(25, 0);
+    glVertex2f(15, 0);
+    glEnd();                      // End door
+
+    glColor3f(0.7, 0.9, 1.0);      // Set window color (light blue)
+    glBegin(GL_QUADS);            // Draw left window
+    glVertex2f(2, -5);
+    glVertex2f(12, -5);
+    glVertex2f(12, 5);
+    glVertex2f(2, 5);
+    glEnd();                      // End left window
+
+    glBegin(GL_QUADS);            // Draw right window
+    glVertex2f(28, -5);
+    glVertex2f(38, -5);
+    glVertex2f(38, 5);
+    glVertex2f(28, 5);
+    glEnd();                      // End right window
+
+    glColor3f(0.5f, 0.35f, 0.2f);  // Set veranda floor color
+    glBegin(GL_QUADS);            // Draw veranda floor
+    glVertex2f(-10, -30);
+    glVertex2f(50, -30);
+    glVertex2f(50, -35);
+    glVertex2f(-10, -35);
+    glEnd();                      // End veranda
+
+    glPopMatrix();                // Restore transformation
+}
+
+// Function to draw a river with color gradient
+void river() {
+    glBegin(GL_QUADS);            // Begin river
+    glColor3f(0.0, 0.3, 0.7);     // Bottom color (dark blue)
+    glVertex2f(-1000, -70);
+    glVertex2f(1000, -70);
+
+    glColor3f(0.0, 0.6, 1.0);     // Top color (light blue)
+    glVertex2f(900, -60);
+    glVertex2f(-900, -60);
+    glEnd();                      // End river
+}
+
+// Function to draw a moving boat
+void boat(float x) {
+    float y = -60;                // Set vertical position of boat
+    glPushMatrix();               // Save transformation
+    glTranslatef(x, y, 0);        // Move boat to position (x, y)
+
+    glColor3f(0.36, 0.25, 0.20);  // Set base color
+    glBegin(GL_QUADS);           // Draw base of the boat
+    glVertex2f(-15, 0);
+    glVertex2f(15, 0);
+    glVertex2f(10, -5);
+    glVertex2f(-10, -5);
+    glEnd();                      // End base
+
+    glColor3f(0.2, 0.2, 0.2);     // Set mast color
+    glBegin(GL_LINES);           // Draw mast
+    glVertex2f(0, 0);
+    glVertex2f(0, 15);
+    glEnd();                      // End mast
+
+    glColor3f(1, 1, 0.8);         // Set sail color
+    glBegin(GL_TRIANGLES);       // Draw sail
+    glVertex2f(0, 15);
+    glVertex2f(0, 0);
+    glVertex2f(10, 8);
+    glEnd();                      // End sail
+
+    glColor3f(0.6, 0.4, 0.2);     // Set cabin color
+    glBegin(GL_QUADS);           // Draw cabin
+    glVertex2f(-8, 0);
+    glVertex2f(8, 0);
+    glVertex2f(6, 3);
+    glVertex2f(-6, 3);
+    glEnd();                      // End cabin
+
+    glPopMatrix();                // Restore transformation
+}
+
+// Wrapper function to draw sun at a fixed location
+void sun() {
+    sun(70, 70, 10);              // Call sun drawing with center (70,70) and radius 10
+}
+
+// Wrapper function to draw multiple birds
+void birds() {
+    bird(birdx, 75);              // First bird
+    bird(birdx + 15, 78);         // Second bird
+    bird(birdx + 35, 78);         // Third bird
+    bird(birdx + 50, 75);         // Fourth bird
+}
+
+// Wrapper function to draw animated boat
+void boat() {
+    boat(boatx - 30);             // Draw boat at shifted x position
+}
+
+// Wrapper function to draw house
+void house() {
+    house(-20);                   // Draw house at x = -20
+}
+
+// Wrapper function to draw multiple trees
+void trees() {
+    tree(-55);                    // Draw tree at x = -55
+    tree(-88);                    // Draw tree at x = -88
+    tree(55);                     // Draw tree at x = 55
+    tree(88);                     // Draw tree at x = 88
+}
+
+// Timer callback function for animation
+void timer(int value) {
+    boatx += 1.0;                 // Increment boat x-position
+    birdx += 2.0;                 // Increment bird x-position
+
+    if (boatx > 150)              // Reset boat if out of screen
+        boatx = -150;
+    if (birdx > 150)              // Reset bird if out of screen
+        birdx = -150;
+
+    glutPostRedisplay();         // Request screen redraw
+    glutTimerFunc(30, timer, 0); // Call timer again after 30 milliseconds
+}
+
+// Main display function
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT); // Clear the screen
+
+    sky();                        // Draw sky
+    ground();                     // Draw ground
+    river();                      // Draw river
+    sun();                        // Draw sun
+    birds();                      // Draw birds
+    boat();                       // Draw boat
+    house();                      // Draw house
+    trees();                      // Draw trees
+
+    glFlush();                    // Flush OpenGL commands
+}
+
+// OpenGL initialization
+void init() {
+    glClearColor(0, 0, 0, 0);     // Set background color to black
+    glMatrixMode(GL_PROJECTION); // Set projection matrix mode
+    glLoadIdentity();            // Reset projection matrix
+    glOrtho(-100, 100, -100, 100, -1, 1); // Set orthographic projection
+}
+
+// Main function - entry point
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);                              // Initialize GLUT
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);        // Set display mode to single buffer and RGB
+    glutInitWindowSize(800, 600);                       // Set window size
+    glutInitWindowPosition(100, 100);                   // Set window position
+    glutCreateWindow("cse-336-project");                // Create window with title
+
+    init();                                             // Call initialization function
+    glutDisplayFunc(display);                           // Set display function callback
+    glutTimerFunc(0, timer, 0);                         // Set timer function for animation
+    glutMainLoop();                                     // Enter the main event loop
+    return 0;                                           // Exit program
+}
